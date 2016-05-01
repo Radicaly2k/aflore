@@ -4,6 +4,8 @@ import xml.etree.ElementTree as ET
 import sqlite3
 import os
 
+categories = []
+
 xml = """<?xml version="1.0" encoding="utf-8"?>
 <GetCategoriesRequest xmlns="urn:ebay:apis:eBLBaseComponents">
   <RequesterCredentials>
@@ -60,12 +62,9 @@ for category in categoryList:
   except Exception as e:
     bestOfferEnabled = 0
   pass
-  try:
-    with db:
-        db.execute('''INSERT INTO categories(id, parentId, category_name, category_level, bestOfferEnabled)
-                  VALUES(?,?,?,?,?)''', (id, parentId,categoryName, categoryLevel, bestOfferEnabled))
-  except sqlite3.IntegrityError:
-    print('Record already exists')
+  categories.append((id, parentId, categoryName, categoryLevel, bestOfferEnabled))
+    
+cursor.executemany("INSERT INTO categories VALUES (?,?,?,?,?)", categories)
 db.commit()
 db.close()
 print ('Process finished!!')
