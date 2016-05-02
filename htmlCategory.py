@@ -11,20 +11,23 @@ def bodyParentHTML():
   cursor.execute("SELECT * FROM categories WHERE id=?", (id,))
   rows = cursor.fetchall()
   for row in rows:
-    return '<blockquote><p><strong>CateogryID</strong>:' + str(row[0]) + '</p><p><strong>CateogryName</strong>:' + row[2] + '</p><p><strong>CategoryLevel</strong>:' + str(row[3]) + '</p><p><strong>BestOfferEnabled</strong>:' + ('YES', 'NO')[row[3] == 1] +'</p></blockquote>';
+    return '<blockquote><p><strong>CateogryID</strong>:' + str(row[0]) + '</p><p><strong>Parent Category ID</strong>:' + str(row[1]) + '</p><p><strong>CateogryName</strong>:' + row[2] + '</p><p><strong>CategoryLevel</strong>:' + str(row[3]) + '</p><p><strong>BestOfferEnabled</strong>:' + ('YES', 'NO')[row[3] == 1] +'</p></blockquote>';
 
 # Builds the body section with the list of childs of the category
-def bodyChildHTML():
-  query2 = cursor.execute("SELECT count(1) FROM categories WHERE parentId=?", (id,))
+def bodyChildHTML(identificator):
+  query2 = cursor.execute("SELECT count(1) FROM categories WHERE parentId=?", (identificator,))
   if query2.fetchone()[0] == 0:
-    print 'No Childs'
+    # print ('No Childs')
     htmlBody = ''
   else:
-    cursor.execute("SELECT * FROM categories WHERE parentId=?", (id,))
+    cursor.execute("SELECT * FROM categories WHERE parentId=?", (identificator,))
     rows = cursor.fetchall()
     htmlBody = '<p>This is the sub categories list:</p><ul>'
     for row in rows:
-      htmlBody = htmlBody + '<li><p><strong>CateogryID</strong>:' + str(row[0]) + '</p><p><strong>CateogryName</strong>:' + row[2] + '</p><p><strong>CategoryLevel</strong>:' + str(row[3]) + '</p><p><strong>BestOfferEnabled</strong>:' + ('YES', 'NO')[row[3] == 1] +'</p></li>';  
+      htmlBody = htmlBody + '<li><p><strong>CateogryID</strong>:' + str(row[0]) + '</p><p><strong>Parent Category ID</strong>:' + str(row[1]) + '</p><p><strong>CateogryName</strong>:' + row[2] + '</p><p><strong>CategoryLevel</strong>:' + str(row[3]) + '</p><p><strong>BestOfferEnabled</strong>:' + ('YES', 'NO')[row[3] == 1] +'</p></li>';  
+      htmlBody = htmlBody + '<ul>'
+      htmlBody = htmlBody + bodyChildHTML(str(row[0]))
+      htmlBody = htmlBody + '</ul>'
     htmlBody = htmlBody + '</ul>'
   return htmlBody;
    
@@ -40,13 +43,13 @@ cursor = db.cursor()
 query = cursor.execute("SELECT count(1) FROM categories WHERE parentId=? OR id=?", (id,id))
 # Evaluates if the category exists if not the error message will be shown
 if query.fetchone()[0] == 0:
-  print 'Category ID not found in DB'
+  print ('Category ID not found in DB')
 # If category is found will generate HTML file
 else:
   f = open(sys.argv[1]+'.html', 'w')
   f.write(headerHTML())
   f.write(bodyParentHTML())
-  f.write(bodyChildHTML())
+  f.write(bodyChildHTML(id))
   f.write(footerHTML())
 db.close()
-print 'Process finished'
+print ('Process finished')
